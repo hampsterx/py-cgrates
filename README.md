@@ -21,7 +21,7 @@ See: https://github.com/cgrates/cgrates
     
     => <Account(AcmeWidgets)>
     
-    api.add_destination("DST_45", prefixes=["45"]
+    api.add_destination("DST_45", prefixes=["45"])
     
     => <Destination(DST_64, [64])>
     
@@ -29,12 +29,8 @@ See: https://github.com/cgrates/cgrates
     
     => [<Rate(rate=0.25, rate_unit=60s,...)>]
     
-    api.add_destination_rates(dest_rate_id="DR_64", dest_rates=[models.DestinationRate(rate_id="RT_STANDARD", dest_id="DST_64")])
+    api.add_destination_rates(dest_rate_id="DR_64", 
+            dest_rates=[models.DestinationRate(rate_id="RT_STANDARD", dest_id="DST_64")])
 
     => [<DestinationRate(rate_id=RT_STANDARD, dest_id=DST_64,...)>]
-    
-
-    
-    
-    
     

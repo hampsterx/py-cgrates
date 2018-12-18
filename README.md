@@ -1,5 +1,7 @@
 # Python CGRateS Api Client
 
+[![PyPI version](https://badge.fury.io/py/py-cgrates.svg)](https://badge.fury.io/py/py-cgrates)
+
 WIP
 
 See: https://github.com/cgrates/cgrates

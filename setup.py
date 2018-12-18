@@ -7,7 +7,7 @@ setup(name='py-cgrates',
       description='Py CGRrateS',
       long_description=long_description,
       long_description_content_type="text/markdown",
-      version='0.0.1',
+      version='0.0.2',
       url='https://github.com/hampsterx/py-cgrates',
       author='Tim van der Hulst',
       author_email='tim.vdh@gmail.com',
@@ -20,6 +20,6 @@ setup(name='py-cgrates',
       ],
       packages=['cgrates'],
       install_requires=[
-
+        'marshmallow==3.0.0rc1'
       ]
 )

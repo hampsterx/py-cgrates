@@ -41,8 +41,6 @@ class Account(BaseModel):
     @classmethod
     def from_result(self, result):
 
-        print(json.dumps(result,indent=True))
-
         data = {
             'account': result['ID'].split(":")[1],
             'allow_negative': result["AllowNegative"],

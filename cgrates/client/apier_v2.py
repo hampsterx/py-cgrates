@@ -1,5 +1,5 @@
 from cgrates import models
-from .base import BaseClient
+from cgrates.client.base import BaseClient
 
 
 class ClientV2(BaseClient):

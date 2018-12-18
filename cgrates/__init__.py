@@ -1,1 +1,1 @@
-from .client import Client
+from cgrates.client import Client

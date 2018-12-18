@@ -110,9 +110,19 @@ class RatingPlan(BaseModel):
     SCHEMA = schema.RatingPlanSchema
 
     def __init__(self, dest_rate_id: str, timing_id: str, weight: int = 10):
-        self.DestinationRatesId = dest_rate_id
-        self.TimingId = timing_id
-        self.Weight = weight
+        self.dest_rate_id = dest_rate_id
+        self.timing_id = timing_id
+        self.weight = weight
 
     def __repr__(self):
-        return '<RatingPlan(dest_rate_id={self.DestinationRatesId}, timing_id={self.TimingId},...)>'.format(self=self)
+        return '<RatingPlan(dest_rate_id={self.dest_rate_id}, timing_id={self.timing_id},...)>'.format(self=self)
+
+    @classmethod
+    def from_result(self, result):
+        data = {
+            'dest_rate_id': result["DestinationRatesId"],
+            'timing_id': result["TimingId"],
+            'weight': result["Weight"],
+        }
+
+        return self(**data)

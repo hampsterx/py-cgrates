@@ -10,7 +10,9 @@ See: https://github.com/cgrates/cgrates
 
     pip install py_cgrates
 
-## Usage
+## Usage 
+
+## Account Management - Create
 
     from cgrates import Client
     from cgrates import models
@@ -33,4 +35,35 @@ See: https://github.com/cgrates/cgrates
             dest_rates=[models.DestinationRate(rate_id="RT_STANDARD", dest_id="DST_64")])
 
     => [<DestinationRate(rate_id=RT_STANDARD, dest_id=DST_64,...)>]
+    
+    api.add_rating_plan(rating_plan_id="RP_XX", 
+            rating_plans=[models.RatingPlan(dest_rate_id="DR_65_65", timing_id="ALWAYS")])
+    
+    => [<RatingPlan(dest_rate_id=DR_65_65, timing_id=ALWAYS,...)>]
+
+
+## Account Management - Get/List
+    
+    api.get_accounts()
+    
+    => [<Account(AcmeWidgets)>]
+    
+    api.get_account(account="AcmeWidgets")
+    
+    => <Account(AcmeWidgets)>
+    
+    api.get_destination(destination_id="DST_64")
+    
+    => <Destination(DST_64, [64])>
+    
+    api.get_rates(rate_id="RT_STANDARD")
+    
+    [<Rate(rate=0.25, rate_unit=60s,...)>]
+    
+    api.get_rating_plan(rating_plan_id="RP_XX")
+    
+    =>  [<RatingPlan(dest_rate_id=DR_65_65, timing_id=ALWAYS,...)>]
+
+
+    
     

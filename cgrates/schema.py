@@ -37,6 +37,6 @@ class DestinationRateSchema(Schema):
 
 
 class RatingPlanSchema(Schema):
-    DestinationRatesId = fields.Str(required=True)
-    TimingId = fields.Str(required=True)
-    Weight = fields.Int()
+    DestinationRatesId = fields.Str(required=True, attribute="dest_rate_id")
+    TimingId = fields.Str(required=True, attribute="timing_id")
+    Weight = fields.Int(required=True, attribute="weight")

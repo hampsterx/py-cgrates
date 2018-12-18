@@ -72,7 +72,7 @@ class ClientV1(BaseClient):
             else:
                 raise Exception("{} returned error: {}".format(method, error))
 
-        return [models.Rate.from_result(x) for x in data['RateSlots']]
+        return [models.Rate.from_result(r) for r in data['RateSlots']]
 
     def add_rates(self, rate_id: str, rates: List[models.Rate]):
 
@@ -113,7 +113,7 @@ class ClientV1(BaseClient):
             else:
                 raise Exception("{} returned error: {}".format(method, error))
 
-        return [models.DestinationRate.from_result(x) for x in data['DestinationRates']]
+        return [models.DestinationRate.from_result(dr) for dr in data['DestinationRates']]
 
     def add_destination_rates(self, dest_rate_id: str, dest_rates: List[models.DestinationRate]):
 
@@ -138,3 +138,43 @@ class ClientV1(BaseClient):
             raise Exception("{} returned {}".format(method, data))
 
         return self.get_destination_rates(dest_rate_id=dest_rate_id)
+
+    def get_rating_plan(self, rating_plan_id: str):
+
+        self.ensure_valid_tag(name="rating_plan_id", value=rating_plan_id, prefix="RP")
+
+        method = "ApierV1.GetTPRatingPlan"
+
+        params = {
+                    "Id": rating_plan_id,
+                    "TPid": self.tenant
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+        return [models.RatingPlan.from_result(rp) for rp in data['RatingPlanBindings']]
+
+
+    def add_rating_plan(self, rating_plan_id: str, rating_plans: List[models.RatingPlan]):
+
+        self.ensure_valid_tag(name="rating_plan_id", value=rating_plan_id, prefix="RP")
+
+        # todo: confirm rating_plans are valid
+
+        method = "ApierV1.SetTPRatingPlan"
+
+        params = {
+            "Id": rating_plan_id,
+            "RatingPlanBindings": [rp.to_dict() for rp in rating_plans],
+            "TPid": self.tenant
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+        return self.get_rating_plan(rating_plan_id=rating_plan_id)

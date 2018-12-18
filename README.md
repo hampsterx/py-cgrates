@@ -8,7 +8,7 @@ See: https://github.com/cgrates/cgrates
 
 ## Install
 
-    pip install py-cgrates
+    pip install py_cgrates
 
 ## Usage
 

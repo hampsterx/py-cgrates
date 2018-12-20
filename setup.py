@@ -20,6 +20,6 @@ setup(name='py-cgrates',
       ],
       packages=find_packages(exclude=["tests"]),
       install_requires=[
-        'marshmallow==3.0.0rc1'
+        'schematics==2.1.0'
       ]
 )

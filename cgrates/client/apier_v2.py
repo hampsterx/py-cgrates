@@ -17,7 +17,7 @@ class ClientV2(BaseClient):
         if error:
             raise Exception("{} returned error: {}".format(method, error))
 
-        return [models.Account.from_result(x) for x in data]
+        return [models.Account(x) for x in data]
 
     def get_account(self, account: str):
 
@@ -33,7 +33,7 @@ class ClientV2(BaseClient):
         if error:
             raise Exception("{} returned error: {}".format(method, error))
 
-        return models.Account.from_result(data)
+        return models.Account(data)
 
     def add_account(self, account: str, action_plan_id: str ="", action_trigger_id: str="", allow_negative=False):
 

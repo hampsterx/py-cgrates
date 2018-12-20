@@ -1,5 +1,12 @@
 import requests
 import re
+import logging
+
+log = logging.getLogger()
+
+class TPNotFoundException(Exception):
+    pass
+
 
 class BaseClient:
 
@@ -10,9 +17,12 @@ class BaseClient:
             "params": params
         }
 
+        log.debug("Calling {}".format(method), extra={"params": params})
+
         response = requests.post('http://localhost:2080/jsonrpc', timeout=5, json=body)
 
         if response.status_code != 200:
+            log.error("Received {} response".format(response.status_code), extra={"response": response.text})
             raise Exception("Received {} calling {}".format(response.status_code, method))
 
         result = response.json()

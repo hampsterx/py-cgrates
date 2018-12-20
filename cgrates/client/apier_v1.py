@@ -1,9 +1,25 @@
 from typing import List
 from cgrates import models
-from cgrates.client.base import BaseClient
-
+from cgrates.client.base import BaseClient, TPNotFoundException
 
 class ClientV1(BaseClient):
+
+    def reload_cache(self):
+
+        method = "ApierV1.ReloadCache"
+
+        params = {
+
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            if error == "NOT_FOUND":
+                return None
+            else:
+                raise Exception("{} returned error: {}".format(method, error))
+
 
     def get_destination(self, destination_id: str):
 
@@ -19,7 +35,7 @@ class ClientV1(BaseClient):
             else:
                 raise Exception("{} returned error: {}".format(method, error))
 
-        return models.Destination.from_result(data)
+        return models.Destination(data)
 
     def add_destination(self, destination_id: str, prefixes):
 
@@ -72,7 +88,7 @@ class ClientV1(BaseClient):
             else:
                 raise Exception("{} returned error: {}".format(method, error))
 
-        return [models.Rate.from_result(r) for r in data['RateSlots']]
+        return [models.Rate(r) for r in data['RateSlots']]
 
     def add_rates(self, rate_id: str, rates: List[models.Rate]):
 
@@ -82,7 +98,7 @@ class ClientV1(BaseClient):
 
         params = {
             "Id": rate_id,
-            "RateSlots": [r.to_dict() for r in rates],
+            "RateSlots": [r.to_primitive() for r in rates],
             "TPid": self.tenant
         }
 
@@ -113,11 +129,20 @@ class ClientV1(BaseClient):
             else:
                 raise Exception("{} returned error: {}".format(method, error))
 
-        return [models.DestinationRate.from_result(dr) for dr in data['DestinationRates']]
+        return [models.DestinationRate(dr) for dr in data['DestinationRates']]
 
     def add_destination_rates(self, dest_rate_id: str, dest_rates: List[models.DestinationRate]):
 
         self.ensure_valid_tag(name="dest_rate_id", value=dest_rate_id, prefix="DR")
+
+        for dr in dest_rates:
+            rates = self.get_rates(rate_id=dr.rate_id)
+            if not rates:
+                raise TPNotFoundException("Rate {} Not found. Cannot add destination rate {}".format(dr.rate_id, dest_rate_id))
+            dest = self.get_destination(destination_id=dr.dest_id)
+            if not dest:
+                raise TPNotFoundException("Destination {} Not found. Cannot add destination rate {}".format(dr.dest_id, dest_rate_id))
+
 
         # todo: confirm rates and destinations first?
 
@@ -137,6 +162,16 @@ class ClientV1(BaseClient):
         if data != "OK":
             raise Exception("{} returned {}".format(method, data))
 
+
+        #
+        #method = "ApierV1.LoadDestinationRates"
+
+        #data, error = self.call_api(method, params=[])
+
+        #if error:
+        #    raise Exception("{} returned error: {}".format(method, error))
+
+
         return self.get_destination_rates(dest_rate_id=dest_rate_id)
 
     def get_rating_plan(self, rating_plan_id: str):
@@ -153,16 +188,25 @@ class ClientV1(BaseClient):
         data, error = self.call_api(method, params=[params])
 
         if error:
+            if error == "NOT_FOUND":
+                return None
+
             raise Exception("{} returned error: {}".format(method, error))
 
-        return [models.RatingPlan.from_result(rp) for rp in data['RatingPlanBindings']]
+        return [models.RatingPlan(rp) for rp in data['RatingPlanBindings']]
 
 
     def add_rating_plan(self, rating_plan_id: str, rating_plans: List[models.RatingPlan]):
 
         self.ensure_valid_tag(name="rating_plan_id", value=rating_plan_id, prefix="RP")
 
-        # todo: confirm rating_plans are valid
+        # Verify child deps exist. Eg destination rates/destinations/rates
+        for rp in rating_plans:
+            dr = self.get_destination_rates(dest_rate_id=rp.dest_rate_id)
+            if not dr:
+                raise Exception("Destination Rate {} Not found. Cannot add rating plan {}".format(rp.dest_rate_id, rating_plan_id))
+
+            # todo: verify timing tag
 
         method = "ApierV1.SetTPRatingPlan"
 
@@ -177,4 +221,121 @@ class ClientV1(BaseClient):
         if error:
             raise Exception("{} returned error: {}".format(method, error))
 
+        method = "ApierV1.LoadRatingPlan"
+
+        params = {
+            "RatingPlanId": rating_plan_id,
+            "TPid": self.tenant
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+
         return self.get_rating_plan(rating_plan_id=rating_plan_id)
+
+    def get_rating_profile(self, rating_profile_id: str):
+
+        method = "ApierV1.GetTPRatingProfilesByLoadId"
+
+        params = {
+            "LoadId": rating_profile_id,
+            "TPid": self.tenant,
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+        # https://github.com/cgrates/cgrates/issues/1353
+        # todo
+        return None
+
+        return [models.RatingPlanActivation(rp) for rp in data['RatingPlanActivations']]
+
+
+    def add_rating_profiles(self, rating_profile_id: str, subject: str, rating_plan_activations: List[models.RatingPlanActivation]):
+
+        self.ensure_valid_tag(name="rating_profile_id", value=rating_profile_id, prefix="RP")
+
+        for rpa in rating_plan_activations:
+            rp = self.get_rating_plan(rating_plan_id=rpa.rating_plan_id)
+            if not rp:
+                raise Exception("Rating Plan {} Not found. Cannot add rating profile {}".format(rpa.rating_plan_id, rating_profile_id))
+
+        method = "ApierV1.SetTPRatingProfile"
+
+        params = {
+            "LoadId": rating_profile_id,
+            "TPid": self.tenant,
+            "Category": "call",
+            "Direction": "*out",
+            "Subject": subject,
+            "Tenant": self.tenant,
+            "RatingPlanActivations": [rpa.to_dict() for rpa in rating_plan_activations]
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+        method = "ApierV1.LoadRatingProfile"
+
+        params = {
+            "TPid": self.tenant,
+         #   "RatingProfileId": rating_profile_id   # todo: verify this is actually working?
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+        return self.get_rating_profile(rating_profile_id=rating_profile_id)
+
+
+    def get_cost(self, subject, destination, answer_time, usage, category="call"):
+
+        method = "ApierV1.GetCost"
+
+        import datetime
+
+        # todo: timezone?
+        answer_time_str = answer_time.replace(microsecond=0).isoformat()
+
+        params = {
+            "Tenant": self.tenant,
+            "Category": category,
+            "Subject": subject,
+            "AnswerTime": answer_time_str,
+            "Destination": destination,
+            "Usage": usage
+
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            if error == "SERVER_ERROR: UNAUTHORIZED_DESTINATION":
+                return None
+
+            raise Exception("{} returned error: {}".format(method, error))
+
+        #return data
+
+        def format_s(num):
+            return "{}s".format(round(num / (1000*1000*1000)))
+
+        return {
+            'cost' : data["Cost"],
+            'usage': format_s(data["Usage"]),
+            'charges': [[{'cost': i["Cost"], 'usage': format_s(i['Usage'])} for i in c["Increments"]] for c in data['Charges']],
+            'rating_filters': [{'dest_id': rf['DestinationID'], 'prefix': rf['DestinationPrefix'], 'rating_plan_id': rf['RatingPlanID'], 'subject': rf['Subject']} for rf in data['RatingFilters'].values()],
+            'rates': [[{'value': i['Value'], 'group_interval_start': i['GroupIntervalStart'], 'rate_increment': format_s(i['RateIncrement']), 'rate_unit': format_s(i['RateUnit'])} for i in rf] for rf in data['Rates'].values()],
+
+        }
+

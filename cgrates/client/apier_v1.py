@@ -219,9 +219,9 @@ class ClientV1(BaseClient):
 
         return self.get_destination_rates(dest_rate_id=dest_rate_id)
 
-    def get_rating_plan(self, rating_plan_id: str):
+    def get_rating_plans(self, rating_plan_id: str):
 
-        self.ensure_valid_tag(name="rating_plan_id", value=rating_plan_id, prefix="RP")
+        self.ensure_valid_tag(name="rating_plan_id", value=rating_plan_id, prefix="RPL")
 
         method = "ApierV1.GetTPRatingPlan"
 
@@ -241,9 +241,9 @@ class ClientV1(BaseClient):
         return [models.RatingPlan(rp) for rp in data['RatingPlanBindings']]
 
 
-    def add_rating_plan(self, rating_plan_id: str, rating_plans: List[models.RatingPlan]):
+    def add_rating_plans(self, rating_plan_id: str, rating_plans: List[models.RatingPlan]):
 
-        self.ensure_valid_tag(name="rating_plan_id", value=rating_plan_id, prefix="RP")
+        self.ensure_valid_tag(name="rating_plan_id", value=rating_plan_id, prefix="RPL")
 
         # Verify child deps exist. Eg destination rates/destinations/rates
         for rp in rating_plans:
@@ -279,9 +279,11 @@ class ClientV1(BaseClient):
             raise Exception("{} returned error: {}".format(method, error))
 
 
-        return self.get_rating_plan(rating_plan_id=rating_plan_id)
+        return self.get_rating_plans(rating_plan_id=rating_plan_id)
 
     def get_rating_profile(self, rating_profile_id: str):
+
+        self.ensure_valid_tag(name="rating_profile_id", value=rating_profile_id, prefix="RPF")
 
         method = "ApierV1.GetTPRatingProfilesByLoadId"
 
@@ -304,10 +306,10 @@ class ClientV1(BaseClient):
 
     def add_rating_profiles(self, rating_profile_id: str, subject: str, rating_plan_activations: List[models.RatingPlanActivation]):
 
-        self.ensure_valid_tag(name="rating_profile_id", value=rating_profile_id, prefix="RP")
+        self.ensure_valid_tag(name="rating_profile_id", value=rating_profile_id, prefix="RPF")
 
         for rpa in rating_plan_activations:
-            rp = self.get_rating_plan(rating_plan_id=rpa.rating_plan_id)
+            rp = self.get_rating_plans(rating_plan_id=rpa.rating_plan_id)
             if not rp:
                 raise Exception("Rating Plan {} Not found. Cannot add rating profile {}".format(rpa.rating_plan_id, rating_profile_id))
 

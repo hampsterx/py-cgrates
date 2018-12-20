@@ -19,7 +19,7 @@ class BaseClient:
 
         log.debug("Calling {}".format(method), extra={"params": params})
 
-        response = requests.post('http://localhost:2080/jsonrpc', timeout=5, json=body)
+        response = requests.post('http://{}:{}/jsonrpc'.format(self.host, self.port), timeout=5, json=body)
 
         if response.status_code != 200:
             log.error("Received {} response".format(response.status_code), extra={"response": response.text})

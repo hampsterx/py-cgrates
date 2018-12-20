@@ -87,11 +87,13 @@ class Account(Model):
     allow_negative = fields.BooleanType(default=False, serialized_name="AllowNegative")
     disabled = fields.BooleanType(default=False, serialized_name="Disabled")
 
+    # todo: map these to correct types
+    balance_map = fields.StringType(serialized_name="BalanceMap")
+    unit_counters = fields.StringType(serialized_name="UnitCounters")
+    action_triggers = fields.StringType(serialized_name="ActionTriggers")
+
     def __repr__(self):
         return '<Account(account={self.account},...)>'.format(self=self)
-
-
-
 
 
 class Timing(Model):

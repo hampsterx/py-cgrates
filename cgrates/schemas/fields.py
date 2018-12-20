@@ -9,7 +9,10 @@ from schematics.types import (
 class SecondsType(IntType):
 
     def convert(self, value, context=None):
-        value = value.replace("s", "") if value else None
+        if isinstance(value, int):
+            return value
+
+        value = int(value.replace("s", "")) if value else None
 
         if not value:
             return None

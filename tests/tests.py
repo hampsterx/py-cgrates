@@ -61,7 +61,7 @@ class TPManagementHelpers(BaseTests):
         rating_plan.dest_rate_id = dest_rate_id
         rating_plan.timing_id = timing_id
 
-        return self.client.add_rating_plan(rating_plan_id=rating_plan_id, rating_plans=[rating_plan])
+        return self.client.add_rating_plans(rating_plan_id=rating_plan_id, rating_plans=[rating_plan])
 
     def create_timing(self, timing_id):
         return self.client.add_timing(timing_id=timing_id)
@@ -226,7 +226,7 @@ class TPManagementTests(TPManagementHelpers, BaseTests):
 
     def test_get_rating_plan_unknown(self):
 
-        self.assertIsNone(self.client.get_rating_plan(rating_plan_id=self.get_id("RP")))
+        self.assertIsNone(self.client.get_rating_plans(rating_plan_id=self.get_id("RPL")))
 
     def test_add_rating_plan(self):
 
@@ -236,7 +236,7 @@ class TPManagementTests(TPManagementHelpers, BaseTests):
         timing_id = self.get_id("TP")
         self.create_timing(timing_id=timing_id)
 
-        rating_plan_id = self.get_id("RP")
+        rating_plan_id = self.get_id("RPL")
         rating_plans = self.create_rating_plan(dest_rate_id=dest_rate_id, rating_plan_id=rating_plan_id, timing_id=timing_id)
 
         self.assertIsInstance(rating_plans, list)
@@ -265,14 +265,14 @@ class TPManagementTests(TPManagementHelpers, BaseTests):
         timing_id = self.get_id("TP")
         self.create_timing(timing_id=timing_id)
 
-        rating_plan_id = self.get_id("RP")
+        rating_plan_id = self.get_id("RPL")
         self.create_rating_plan(dest_rate_id=dest_rate_id, rating_plan_id=rating_plan_id, timing_id=timing_id)
 
         rating_plan_activation = models.RatingPlanActivation()
         rating_plan_activation.rating_plan_id = rating_plan_id
         rating_plan_activation.activation_time = datetime.now()
 
-        rating_profile_id = self.get_id("RP")
+        rating_profile_id = self.get_id("RPF")
 
         rating_profiles = self.client.add_rating_profiles(rating_profile_id=rating_profile_id, subject="*any",rating_plan_activations=[rating_plan_activation])
 

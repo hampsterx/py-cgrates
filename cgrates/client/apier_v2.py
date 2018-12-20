@@ -5,6 +5,11 @@ from cgrates.client.base import BaseClient
 class ClientV2(BaseClient):
 
     def get_accounts(self):
+        """
+        Get Accounts
+        Note: This uses data_db
+        :return:
+        """
 
         method = "ApierV2.GetAccounts"
 
@@ -20,6 +25,11 @@ class ClientV2(BaseClient):
         return [models.Account(x) for x in data]
 
     def get_account(self, account: str):
+        """
+        Get Account
+        Note: This uses data_db
+        :return:
+        """
 
         method = "ApierV2.GetAccount"
 
@@ -33,9 +43,17 @@ class ClientV2(BaseClient):
         if error:
             raise Exception("{} returned error: {}".format(method, error))
 
+        # Strip off tenant
+        data['ID'] = data['ID'].split(":")[1]
+
         return models.Account(data)
 
     def add_account(self, account: str, action_plan_id: str ="", action_trigger_id: str="", allow_negative=False):
+        """
+        Add Account
+        Note: This uses data_db
+        :return:
+        """
 
         method = "ApierV2.SetAccount"
 

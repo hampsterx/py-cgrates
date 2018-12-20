@@ -1,4 +1,4 @@
-from cgrates import models
+from cgrates.schemas import models
 from cgrates.client.base import BaseClient
 
 

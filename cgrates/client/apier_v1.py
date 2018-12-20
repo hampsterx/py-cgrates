@@ -1,5 +1,6 @@
+from datetime import time
 from typing import List
-from cgrates import models
+from cgrates.schemas import models
 from cgrates.client.base import BaseClient, TPNotFoundException
 
 class ClientV1(BaseClient):
@@ -19,6 +20,50 @@ class ClientV1(BaseClient):
                 return None
             else:
                 raise Exception("{} returned error: {}".format(method, error))
+
+    def get_timing(self, timing_id):
+
+        self.ensure_valid_tag(name="timing_id", value=timing_id)
+
+        method = "ApierV1.GetTPTiming"
+
+        params = {
+            'TPid': self.tenant,
+            'ID': timing_id
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+        data.pop("TPid")
+
+        return models.Timing(data)
+
+
+    def add_timing(self, timing_id, week_days: List[int] = None, time: time = None):
+
+        self.ensure_valid_tag(name="timing_id", value=timing_id)
+
+        method = "ApierV1.SetTPTiming"
+
+        timing = models.Timing({'timing_id' : timing_id})
+
+        if week_days:
+            timing.week_days = week_days
+        if time:
+            timing.time = time
+
+        params = timing.to_dict()
+        params['TPid'] = self.tenant
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+        return self.get_timing(timing_id)
 
 
     def get_destination(self, destination_id: str):
@@ -287,7 +332,7 @@ class ClientV1(BaseClient):
 
         params = {
             "TPid": self.tenant,
-         #   "RatingProfileId": rating_profile_id   # todo: verify this is actually working?
+            "LoadId": rating_profile_id
         }
 
         data, error = self.call_api(method, params=[params])

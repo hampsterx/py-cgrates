@@ -29,8 +29,8 @@ class BaseClient:
 
         return result['result'], result.get('error', None)
 
-    def ensure_valid_tag(self, name, value, prefix):
-        if not value.startswith("{}_".format(prefix)):
+    def ensure_valid_tag(self, name, value, prefix=None):
+        if prefix and not value.startswith("{}_".format(prefix)):
             raise Exception("{} must begin with prefix {}_ found: {}".format(name, prefix, value))
 
         if not re.match("^[A-Z0-9\_]+$", value):

@@ -1,5 +1,5 @@
 from cgrates.client.base import BaseClient
-from cgrates.models import CDR
+from cgrates.schemas.models import CDR
 
 class ClientCdrsV2(BaseClient):
 

@@ -28,14 +28,7 @@ class BaseTests(TestCase):
         open("tests/fixtures/{}".format(path), 'w').write(json.dumps(fixture, indent=True))
 
 
-class TPManagementTests(BaseTests):
-    """
-    TP Management Tests
-    """
-
-    def setUp(self):
-        self.client = Client(tenant="1")
-
+class TPManagementHelpers(BaseTests):
 
     def get_rate_model(self, rate=0, connect_fee=0, rate_unit=60, rate_increment=60):
 
@@ -46,6 +39,63 @@ class TPManagementTests(BaseTests):
         model.rate_increment = rate_increment
 
         return model
+
+    def create_destination_rate(self, dest_rate_id):
+        rate_id = self.get_id("RT")
+        dest_id = self.get_id("DST")
+
+        self.client.add_rates(rate_id=rate_id, rates=[self.get_rate_model()])
+        self.client.add_destination(destination_id=dest_id, prefixes=["00"])
+
+        dest_rate = models.DestinationRate()
+
+        dest_rate.rate_id = rate_id
+        dest_rate.dest_id = dest_id
+
+        return self.client.add_destination_rates(dest_rate_id=dest_rate_id, dest_rates=[dest_rate])
+
+    def create_rating_plan(self, dest_rate_id, rating_plan_id, timing_id):
+
+        rating_plan = models.RatingPlan()
+
+        rating_plan.dest_rate_id = dest_rate_id
+        rating_plan.timing_id = timing_id
+
+        return self.client.add_rating_plan(rating_plan_id=rating_plan_id, rating_plans=[rating_plan])
+
+    def create_timing(self, timing_id):
+        return self.client.add_timing(timing_id=timing_id)
+
+
+class TPManagementTests(TPManagementHelpers, BaseTests):
+    """
+    TP Management Tests
+    """
+
+    def setUp(self):
+        self.client = Client(tenant="test")
+
+    def test_add_timing(self):
+
+        timing_id = self.get_id("ALWAYS")
+
+        timing = self.client.add_timing(timing_id=timing_id, week_days=[1,2,3,4,5])
+
+        self.assertIsInstance(timing, models.Timing)
+
+        data = timing.to_dict()
+
+        # self.dump(data)
+
+        self.assertEquals(
+            {'ID': timing_id,
+             'MonthDays': '*any',
+             'Months': '*any',
+             'Time': '00:00:00',
+             'WeekDays': '1;2;3;4;5',
+             'Years': '*any'},
+            data
+        )
 
 
     def test_get_destination_unknown(self):
@@ -178,37 +228,16 @@ class TPManagementTests(BaseTests):
 
         self.assertIsNone(self.client.get_rating_plan(rating_plan_id=self.get_id("RP")))
 
-    def create_destination_rate(self, dest_rate_id):
-        rate_id = self.get_id("RT")
-        dest_id = self.get_id("DST")
-
-        self.client.add_rates(rate_id=rate_id, rates=[self.get_rate_model()])
-        self.client.add_destination(destination_id=dest_id, prefixes=["00"])
-
-        dest_rate = models.DestinationRate()
-
-        dest_rate.rate_id = rate_id
-        dest_rate.dest_id = dest_id
-
-        return self.client.add_destination_rates(dest_rate_id=dest_rate_id, dest_rates=[dest_rate])
-
-    def create_rating_plan(self, dest_rate_id, rating_plan_id):
-
-
-        rating_plan = models.RatingPlan()
-
-        rating_plan.dest_rate_id = dest_rate_id
-        rating_plan.timing_id = "ALWAYS"  # todo
-
-        return self.client.add_rating_plan(rating_plan_id=rating_plan_id, rating_plans=[rating_plan])
-
     def test_add_rating_plan(self):
 
         dest_rate_id = self.get_id("DR")
         self.create_destination_rate(dest_rate_id=dest_rate_id)
 
+        timing_id = self.get_id("TP")
+        self.create_timing(timing_id=timing_id)
+
         rating_plan_id = self.get_id("RP")
-        rating_plans = self.create_rating_plan(dest_rate_id=dest_rate_id, rating_plan_id=rating_plan_id)
+        rating_plans = self.create_rating_plan(dest_rate_id=dest_rate_id, rating_plan_id=rating_plan_id, timing_id=timing_id)
 
         self.assertIsInstance(rating_plans, list)
         self.assertEqual(len(rating_plans), 1)
@@ -219,7 +248,7 @@ class TPManagementTests(BaseTests):
 
         self.assertEquals(
             {'DestinationRatesId': dest_rate_id,
-             'TimingId': 'ALWAYS',
+             'TimingId': timing_id,
              'Weight': 10
              }, data
         )
@@ -233,8 +262,11 @@ class TPManagementTests(BaseTests):
         dest_rate_id = self.get_id("DR")
         self.create_destination_rate(dest_rate_id=dest_rate_id)
 
+        timing_id = self.get_id("TP")
+        self.create_timing(timing_id=timing_id)
+
         rating_plan_id = self.get_id("RP")
-        self.create_rating_plan(dest_rate_id=dest_rate_id, rating_plan_id=rating_plan_id)
+        self.create_rating_plan(dest_rate_id=dest_rate_id, rating_plan_id=rating_plan_id, timing_id=timing_id)
 
         rating_plan_activation = models.RatingPlanActivation()
         rating_plan_activation.rating_plan_id = rating_plan_id

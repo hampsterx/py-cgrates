@@ -1,5 +1,7 @@
 import datetime
 from schematics.models import Model as DefaultModel
+from schematics.types.compound import ModelType
+
 from . import fields
 
 class Model(DefaultModel):
@@ -84,18 +86,39 @@ class RatingPlanActivation(Model):
         return '<RatingPlanActivation(rating_plan_id={self.rating_plan_id},...)>'.format(self=self)
 
 
+class Balance(Model):
+
+    uuid = fields.StringType(serialized_name="Uuid")
+    id = fields.StringType(serialized_name="ID")
+    directions = fields.StringType(serialized_name="Directions")
+    value = fields.FloatType(serialized_name="Value")
+    factor = fields.FloatType(serialized_name="Factor")
+    subject = fields.StringType(serialized_name="RatingSubject")
+    categories = fields.DictType(fields.StringType, serialized_name="Categories")
+    timings = fields.DictType(fields.StringType, serialized_name="Timings")
+    shared_groups = fields.DictType(fields.StringType, serialized_name="SharedGroups")
+    destination_ids = fields.DictType(fields.StringType, serialized_name="DestinationIDs")
+    timing_ids = fields.DictType(fields.StringType, serialized_name="TimingIDs")
+    weight = fields.IntType(serialized_name="Weight")
+    disabled = fields.BooleanType(serialized_name="Disabled")
+    blocker = fields.BooleanType(serialized_name="Blocker")
+    expiration_date = fields.RFC3339DateTimeType(serialized_name="ExpirationDate")
+
+
+    def __repr__(self):
+        return '<Balance(,...)>'.format(self=self)
+
 class Account(Model):
     account = fields.StringType(serialized_name="ID", required=True)   # todo: result['ID'].split(":")[1]
     allow_negative = fields.BooleanType(default=False, serialized_name="AllowNegative")
     disabled = fields.BooleanType(default=False, serialized_name="Disabled")
 
-    # todo: map these to correct types
-    #balance_map = fields.StringType(serialized_name="BalanceMap")
+    balance_map = fields.DictType(fields.ListType(ModelType(Balance)), serialized_name="BalanceMap")
     unit_counters = fields.StringType(serialized_name="UnitCounters")
     action_triggers = fields.StringType(serialized_name="ActionTriggers")
 
     def __repr__(self):
-        return '<Account(account={self.account},...)>'.format(self=self)
+        return '<Account(account={}, balances={}, ...)>'.format(self.account, len(self.balance_map) if self.balance_map else 0)
 
 
 class Timing(Model):

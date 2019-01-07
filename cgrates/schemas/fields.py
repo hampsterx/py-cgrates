@@ -3,8 +3,9 @@ from rfc3339 import rfc3339
 from datetime import time
 from schematics.types import (
     StringType as DefaultStringType, DateTimeType as DefaultDateTimeType,
-    FloatType, IntType, ListType, BooleanType, BaseType
+    FloatType, IntType, ListType, BooleanType, BaseType, DictType
 )
+
 
 
 class ISODateTimeType(DefaultDateTimeType):

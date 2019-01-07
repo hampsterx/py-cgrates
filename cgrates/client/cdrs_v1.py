@@ -19,7 +19,7 @@ class ClientCdrsV1(BaseClient):
         if error:
             raise Exception("{} returned error: {}".format(method, error))
 
-        return data
+        return None
 
     def get_cdrs(self, account_id=None, last_order_id=None, limit=1000):
 

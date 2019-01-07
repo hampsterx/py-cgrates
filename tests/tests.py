@@ -1,3 +1,4 @@
+import time
 import json
 import pprint
 import logging
@@ -370,29 +371,80 @@ class CDRTests(TPManagementHelpers, RatingHelpers, BaseTests):
 
 
 
-class AccountPostPaidRatingTests(TPManagementHelpers, RatingHelpers, BaseTests):
+class AccountTests(TPManagementHelpers, RatingHelpers, BaseTests):
     """
-    Account Post Paid Rating Tests
+    Account Tests
     """
 
     def setUp(self):
-        self.client = Client(tenant="test")
+        self.client = Client(tenant=self.get_id("TENANT"))
 
-    def test_account_rating(self):
+    def test_account(self):
 
-        # Add Account and set balance
         account_id = self.get_id("ACC")
 
         result = self.client.add_account(account_id)
 
-        # todo: check result
+        self.assertDictEqual(
+            {'ActionTriggers': None,
+             'AllowNegative': False,
+             'BalanceMap': {},
+             'Disabled': False,
+             'ID': account_id,
+             'UnitCounters': None
+             },
+            result.to_dict()
+        )
 
         result = self.client.add_balance(account_id, balance_id="MainBalance", value=10)
 
-        # todo: check result
+        data = result.to_dict()
+        balance_map = data.pop('BalanceMap')
+
+        self.assertDictEqual(
+            {'ActionTriggers': None,
+             'AllowNegative': False,
+             'Disabled': False,
+             'ID': account_id,
+             'UnitCounters': None
+             },
+            data
+        )
+
+        self.assertListEqual(list(balance_map.keys()), ['*monetary'])
+
+        balance = balance_map['*monetary'][0]
+        balance.pop("Uuid")
+
+        self.assertDictEqual(
+            {'Blocker': False,
+             'Categories': {},
+             'DestinationIDs': {},
+             'Directions': None,
+             'Disabled': False,
+             'ExpirationDate': '0001-01-01T00:00:00+00:00',
+             'Factor': None,
+             'ID': 'MainBalance',
+             'RatingSubject': None,
+             'SharedGroups': {},
+             'TimingIDs': {},
+             'Timings': None,
+             'Value': 10.0,
+             'Weight': 0
+             },
+            balance
+        )
+
+    def test_account_balance(self):
+
+        # Add Account and set balance
+        account_id = self.get_id("ACC")
+
+        self.client.add_account(account_id)
+
+        self.client.add_balance(account_id, balance_id="MainBalance", value=10)
 
         self.create_standard_rating()
-
 
         cdr = models.CDR()
 
@@ -405,13 +457,16 @@ class AccountPostPaidRatingTests(TPManagementHelpers, RatingHelpers, BaseTests):
         cdr.request_type = "postpaid"
         cdr.origin_id = self.get_id("ORIGIN")
 
-        result = self.client.process_cdr(cdr)
+        self.client.process_cdr(cdr)
 
-        print(result)
+        # Need to wait, seems ProcessExternalCDR is async?
+        time.sleep(0.1)
 
         result = self.client.get_account(account_id)
 
-        # todo: check result
+        # self.dump(result.to_dict())
+
+        self.assertEqual(result.balance_map['*monetary'][0].value, 9.9)
 
         result = self.client.get_cdrs(account_id=account_id)
 

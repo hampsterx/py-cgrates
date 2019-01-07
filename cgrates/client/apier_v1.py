@@ -486,11 +486,7 @@ class ClientV1(BaseClient):
         if error:
             raise Exception("{} returned error: {}".format(method, error))
 
-        print(data)
-        # todo: format data
-
-        return data
-
+        return self.get_account(account=account)
 
     def rate_cdrs(self):
 

@@ -7,6 +7,20 @@ log = logging.getLogger()
 
 class ClientV2(BaseClient):
 
+    def _create_account_from_data(self, item):
+        balance_map = item.pop('BalanceMap')
+
+        account = models.Account(item)
+        account.balance_map = {}
+
+        if balance_map:
+            for k, balances in balance_map.items():
+                account.balance_map[k] = []
+                for balance in balances:
+                    account.balance_map[k].append(models.Balance(balance))
+
+        return account
+
     def get_accounts(self):
         """
         Get Accounts
@@ -25,7 +39,13 @@ class ClientV2(BaseClient):
         if error:
             raise Exception("{} returned error: {}".format(method, error))
 
-        return [models.Account(x) for x in data]
+        result = []
+
+        for item in data:
+            result.append(self._create_account_from_data(item))
+
+        return result
+
 
     def get_account(self, account: str):
         """
@@ -49,7 +69,7 @@ class ClientV2(BaseClient):
         # Strip off tenant
         data['ID'] = data['ID'].split(":")[1]
 
-        return models.Account(data, strict=False) # todo: remove this and implement balance_map
+        return self._create_account_from_data(data)
 
     def add_account(self, account: str, action_plan_id: str ="", action_trigger_id: str="", allow_negative=False):
         """

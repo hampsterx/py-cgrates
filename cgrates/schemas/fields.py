@@ -1,9 +1,18 @@
+from rfc3339 import rfc3339
+
 from datetime import time
 from schematics.types import (
-    StringType as DefaultStringType, DateTimeType,
+    StringType as DefaultStringType, DateTimeType as DefaultDateTimeType,
     FloatType, IntType, ListType, BooleanType, BaseType
 )
 
+
+class ISODateTimeType(DefaultDateTimeType):
+    SERIALIZED_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
+
+
+class RFC3339DateTimeType(DefaultDateTimeType):
+    SERIALIZED_FORMAT = lambda kls, value: rfc3339(value)
 
 
 class SecondsType(IntType):

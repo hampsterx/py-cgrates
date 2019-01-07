@@ -7,7 +7,7 @@ setup(name='py-cgrates',
       description='Py CGRrateS',
       long_description=long_description,
       long_description_content_type="text/markdown",
-      version='0.0.4',
+      version='0.0.5',
       url='https://github.com/hampsterx/py-cgrates',
       author='Tim van der Hulst',
       author_email='tim.vdh@gmail.com',
@@ -20,6 +20,7 @@ setup(name='py-cgrates',
       ],
       packages=find_packages(exclude=["tests"]),
       install_requires=[
-        'schematics==2.1.0'
+        'schematics==2.1.0',
+        'rfc3339==6.0'
       ]
 )

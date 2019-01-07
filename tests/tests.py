@@ -270,6 +270,7 @@ class TPManagementTests(TPManagementHelpers, BaseTests):
 
         rating_plan_activation = models.RatingPlanActivation()
         rating_plan_activation.rating_plan_id = rating_plan_id
+
         rating_plan_activation.activation_time = datetime.now()
 
         rating_profile_id = self.get_id("RPF")
@@ -280,3 +281,140 @@ class TPManagementTests(TPManagementHelpers, BaseTests):
 
         #self.assertIsInstance(rating_plans, list)
         #self.assertEqual(len(rating_plans), 1)
+
+class RatingHelpers:
+
+    def create_standard_rating(self):
+
+        # Destination
+        self.dest_id = self.get_id("DST")
+        self.client.add_destination(destination_id=self.dest_id, prefixes=["00"])
+
+        # Rate
+        rate_id = self.get_id("RT")
+
+        rate = models.Rate()
+        rate.rate = 0.1
+        rate.rate_unit = 60
+        rate.rate_increment = 60
+
+        self.client.add_rates(rate_id=rate_id, rates=[rate])
+
+        # Destination Rate
+        dest_rate = models.DestinationRate()
+
+        dest_rate.rate_id = rate_id
+        dest_rate.dest_id = self.dest_id
+
+        dest_rate_id = self.get_id("DR")
+
+        self.client.add_destination_rates(dest_rate_id=dest_rate_id, dest_rates=[dest_rate])
+
+        # Timing
+        timing_id = self.get_id("ALWAYS")
+        self.client.add_timing(timing_id=timing_id)
+
+        # Rating Plan
+
+        rating_plan = models.RatingPlan()
+
+        rating_plan.dest_rate_id = dest_rate_id
+        rating_plan.timing_id = timing_id
+
+        self.rating_plan_id = self.get_id("RPL")
+        self.client.add_rating_plans(rating_plan_id=self.rating_plan_id, rating_plans=[rating_plan])
+
+        # Rating Profile
+        rating_plan_activation = models.RatingPlanActivation()
+        rating_plan_activation.rating_plan_id = self.rating_plan_id
+        rating_plan_activation.activation_time = datetime.now()
+
+        rating_profile_id = self.get_id("RPF")
+
+        self.client.add_rating_profiles(rating_profile_id=rating_profile_id, subject="*any",
+                                        rating_plan_activations=[rating_plan_activation])
+
+        self.client.reload_cache()
+
+
+class CDRTests(TPManagementHelpers, RatingHelpers, BaseTests):
+    """
+    CDR Tests
+    """
+
+    def setUp(self):
+        self.client = Client(tenant="test")
+
+    def test_cost(self):
+
+        self.create_standard_rating()
+
+        result = self.client.get_cost(destination="0000000", subject="1001", answer_time=datetime.now() , usage="30s")
+
+        # self.dump(result)
+
+        self.assertDictEqual(
+            {'charges': [[{'cost': 0.1, 'usage': '60s'}]],
+             'cost': 0.1,
+             'rates': [[{'group_interval_start': 0,
+                         'rate_increment': '60s',
+                         'rate_unit': '60s',
+                         'value': 0.1}]],
+             'rating_filters': [{'dest_id': self.dest_id,
+                                 'prefix': '00',
+                                 'rating_plan_id': self.rating_plan_id,
+                                 'subject': '*out:test:call:*any'}],
+             'usage': '60s'},
+            result
+        )
+
+
+
+class AccountPostPaidRatingTests(TPManagementHelpers, RatingHelpers, BaseTests):
+    """
+    Account Post Paid Rating Tests
+    """
+
+    def setUp(self):
+        self.client = Client(tenant="test")
+
+    def test_account_rating(self):
+
+        # Add Account and set balance
+        account_id = self.get_id("ACC")
+
+        result = self.client.add_account(account_id)
+
+        # todo: check result
+
+        result = self.client.add_balance(account_id, balance_id="MainBalance", value=10)
+
+        # todo: check result
+
+        self.create_standard_rating()
+
+
+        cdr = models.CDR()
+
+        cdr.destination = "0000000"
+        cdr.answer_time = datetime.now()
+        cdr.usage = "30s"
+        cdr.subject = account_id
+        cdr.account = account_id
+
+        cdr.request_type = "postpaid"
+        cdr.origin_id = self.get_id("ORIGIN")
+
+        result = self.client.process_cdr(cdr)
+
+        print(result)
+
+        result = self.client.get_account(account_id)
+
+        # todo: check result
+
+        result = self.client.get_cdrs(account_id=account_id)
+
+        self.assertEqual(len(result), 2)
+
+        self.assertEqual(result[1]['Cost'], 0.1)

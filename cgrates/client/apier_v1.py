@@ -2,6 +2,10 @@ from datetime import time
 from typing import List
 from cgrates.schemas import models
 from cgrates.client.base import BaseClient, TPNotFoundException
+import logging
+
+log = logging.getLogger()
+
 
 class ClientV1(BaseClient):
 
@@ -349,9 +353,6 @@ class ClientV1(BaseClient):
 
         method = "ApierV1.GetCost"
 
-        import datetime
-
-        # todo: timezone?
         answer_time_str = answer_time.replace(microsecond=0).isoformat()
 
         params = {
@@ -368,11 +369,10 @@ class ClientV1(BaseClient):
 
         if error:
             if error == "SERVER_ERROR: UNAUTHORIZED_DESTINATION":
+                log.warn("Failed to cost call: {}".format(destination))
                 return None
 
             raise Exception("{} returned error: {}".format(method, error))
-
-        #return data
 
         def format_s(num):
             return "{}s".format(round(num / (1000*1000*1000)))
@@ -385,4 +385,126 @@ class ClientV1(BaseClient):
             'rates': [[{'value': i['Value'], 'group_interval_start': i['GroupIntervalStart'], 'rate_increment': format_s(i['RateIncrement']), 'rate_unit': format_s(i['RateUnit'])} for i in rf] for rf in data['Rates'].values()],
 
         }
+
+
+    def add_action(self, action):
+
+        method = "ApierV1.SetTPActions"
+
+        params = {
+            "TPid": self.tenant,
+            "Id": "test",
+            "Actions": [a.to_dict() for a in action]
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+        return data
+
+    def add_action_plan(self, action_plan_id, action_plan):
+
+        method = "ApierV1.SetTPActionPlan"
+
+        params = {
+            "TPid": self.tenant,
+            "Id": action_plan_id,
+            "ActionPlan": [a.to_dict() for a in action_plan]
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+        print(data)
+        # todo: format data
+
+        return data
+
+    def add_action_trigger(self, action_trigger_id, action_trigger):
+
+        method = "ApierV1.SetTPActionTriggers"
+
+        params = {
+            "TPid": self.tenant,
+            "Id": action_trigger_id,
+            "ActionTriggers": [a.to_dict() for a in action_trigger]
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+        print(data)
+        # todo: format data
+
+        return data
+
+    def add_account_action(self, account, action_plan_id, action_triggers_id):
+
+        method = "ApierV1.SetTPAccountActions"
+
+        params = {
+            "TPid": self.tenant,
+            "Tenant": self.tenant,
+            "LoadId": "test",
+            "Account": account,
+            "ActionPlanId": action_plan_id,
+            "ActionTriggersId": action_triggers_id,
+            "AllowNegative": True,
+            "Disabled": False
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+        print(data)
+        # todo: format data
+
+        return data
+
+    def add_balance(self, account, value, balance_id, balance_type="*monetary"):
+
+        method = "ApierV1.AddBalance"
+
+        params = {
+            "Tenant": self.tenant,
+            "Account": account,
+            "value": value,
+            "BalanceId": balance_id,
+            "BalanceType": balance_type
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+        print(data)
+        # todo: format data
+
+        return data
+
+
+    def rate_cdrs(self):
+
+        method = "CdrsV1.RateCDRs"
+
+        # todo
+        params = {
+        }
+
+        data, error = self.call_api(method, params=[params])
+
+        if error:
+            raise Exception("{} returned error: {}".format(method, error))
+
+        # todo: check response
+        return data
 

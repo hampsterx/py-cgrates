@@ -1,5 +1,8 @@
 from cgrates.schemas import models
 from cgrates.client.base import BaseClient
+import logging
+
+log = logging.getLogger()
 
 
 class ClientV2(BaseClient):
@@ -46,7 +49,7 @@ class ClientV2(BaseClient):
         # Strip off tenant
         data['ID'] = data['ID'].split(":")[1]
 
-        return models.Account(data)
+        return models.Account(data, strict=False) # todo: remove this and implement balance_map
 
     def add_account(self, account: str, action_plan_id: str ="", action_trigger_id: str="", allow_negative=False):
         """
@@ -78,3 +81,4 @@ class ClientV2(BaseClient):
             raise Exception("{} returned {}".format(method, data))
 
         return self.get_account(account)
+

@@ -11,11 +11,13 @@ class Model(DefaultModel):
 class CDR(Model):
     origin_id = fields.StringType(serialized_name="OriginID")
     category = fields.StringType(serialized_name="Category")
+    account = fields.StringType(serialized_name="Account")
     request_type = fields.StringType(serialized_name="RequestType")
     direction = fields.StringType(serialized_name="Direction")
+    subject = fields.StringType(serialized_name="Subject")
     destination = fields.StringType(serialized_name="Destination")
-    setup_time = fields.DateTimeType(serialized_name="SetupTime", serialized_format="%Y-%m-%dT%H:%M:%S%z")
-    answer_time = fields.DateTimeType(serialized_name="AnswerTime", serialized_format="%Y-%m-%dT%H:%M:%S%z")
+    setup_time = fields.ISODateTimeType(serialized_name="SetupTime")
+    answer_time = fields.ISODateTimeType(serialized_name="AnswerTime")
     usage = fields.StringType(serialized_name="Usage")
     tenant = fields.StringType(serialized_name="Tenant")
     type_of_record = fields.StringType(serialized_name="ToR")
@@ -76,7 +78,7 @@ class RatingPlan(Model):
 class RatingPlanActivation(Model):
     rating_plan_id = fields.StringType(serialized_name="RatingPlanId", required=True)
     fallback_subjects = fields.StringType(serialized_name="FallbackSubjects")
-    activation_time = fields.DateTimeType(serialized_name="ActivationTime", serialized_format="%Y-%m-%dT%H:%M:%SZ")
+    activation_time = fields.RFC3339DateTimeType(serialized_name="ActivationTime")
 
     def __repr__(self):
         return '<RatingPlanActivation(rating_plan_id={self.rating_plan_id},...)>'.format(self=self)
@@ -88,7 +90,7 @@ class Account(Model):
     disabled = fields.BooleanType(default=False, serialized_name="Disabled")
 
     # todo: map these to correct types
-    balance_map = fields.StringType(serialized_name="BalanceMap")
+    #balance_map = fields.StringType(serialized_name="BalanceMap")
     unit_counters = fields.StringType(serialized_name="UnitCounters")
     action_triggers = fields.StringType(serialized_name="ActionTriggers")
 
@@ -107,3 +109,46 @@ class Timing(Model):
 
     def __repr__(self):
         return '<Timing(timing_id={self.timing_id},...)>'.format(self=self)
+
+
+class Action(Model):
+
+    id = fields.StringType(serialized_name="Identifier", required=True)
+
+    def __repr__(self):
+        return '<Action(id={self.id},...)>'.format(self=self)
+
+
+class ActionPlan(Model):
+
+    action_id = fields.StringType(serialized_name="ActionsId", required=True)
+    time = fields.TimeType(default=datetime.time(0, 0, 0), serialized_name="Time")
+    week_days = fields.AnyOrListType(fields.IntType(), default=[], serialized_name="WeekDays")
+    month_days = fields.AnyOrListType(fields.IntType(), default=[], serialized_name="MonthDays")
+    months = fields.AnyOrListType(fields.IntType(), default=[], serialized_name="Months")
+    years = fields.AnyOrListType(fields.IntType(), default=[], serialized_name="Years")
+    weight = fields.IntType(serialized_name="Weight", default=10)
+
+    def __repr__(self):
+        return '<ActionPlan(action_id={self.action_id},...)>'.format(self=self)
+
+
+class ActionTiming(Model):
+
+    action_id = fields.StringType(serialized_name="ActionsId", required=True)
+    timing_id = fields.StringType(serialized_name="TimingId", required=True)
+    weight = fields.IntType(serialized_name="Weight", default=10)
+
+    def __repr__(self):
+        return '<ActionTiming(action_id={self.action_id}, timing_id={self.timing_id}, weight={self.weight})>'.format(self=self)
+
+
+class ActionTrigger(Model):
+
+    id = fields.StringType(serialized_name="Id", required=True)
+    unique_id = fields.StringType(serialized_name="UniqueID", required=True)
+
+    def __repr__(self):
+        return '<ActionTrigger(id={self.id},...)>'.format(self=self)
+
+

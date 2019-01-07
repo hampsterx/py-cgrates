@@ -6,4 +6,4 @@ build
 notes.txt
 temp.py
 release.sh
-generate*
+scripts

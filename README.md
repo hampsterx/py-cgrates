@@ -55,6 +55,8 @@ See: https://github.com/cgrates/cgrates
     models.RatingPlanActivation({'rating_plan_id': 'RPL_CASUAL', 'activation_time': datetime.now()})
     ])
     
+    api.reload_cache()
+    
 
 
 ## Account Management - Get/List
